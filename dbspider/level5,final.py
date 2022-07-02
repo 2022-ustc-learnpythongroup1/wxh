@@ -55,5 +55,4 @@ if __name__ == '__main__':
     url = 'http://www.weather.com.cn/textFC/anhui.shtml'
     source = get_source(url)
     info = get_info(source)
-    print(info[7])
     save_weather(info)
