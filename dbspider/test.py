@@ -1,21 +1,25 @@
-from openpyxl import Workbook
+import urllib.request
+import xpinyin
+from bs4 import BeautifulSoup
 
-book_lists =[[['b','90','56','e','f'] ,], ]
-# book1 = ['b','90','56','e','f'] 
-# book_lists.append(book1)
-book_tag_lists = ['个人管理']
-wb=Workbook()
-ws=[]
-for i in range(len(book_tag_lists)):
-    ws.append(wb.create_sheet(title=book_tag_lists[i])) #utf8->unicode
-for i in range(len(book_tag_lists)): 
-    ws[i].append(['序号','书名','评分','评价人数','作者','出版社'])
-    count=1
-    for bl in book_lists[i]:
-        ws[i].append([count,bl[0],float(bl[1]),int(bl[2]),bl[3],bl[4]])
-        count+=1
-save_path='testbook_list'
-for i in range(len(book_tag_lists)):
-    save_path+=('-'+book_tag_lists[i])
-save_path+='.xlsx'
-wb.save(save_path)
+def get_weather(city_pinyin):
+    header = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+    website = "http://www.tianqi.com/" + city_pinyin + ".html"
+    req = urllib.request.Request(url=website,headers=header)
+    page = urllib.request.urlopen(req)
+    html = page.read()
+    soup = BeautifulSoup(html.decode("utf-8"),"html.parser")  #html.parser表示解析使用的解析器
+    nodes = soup.find_all('dd')
+    tody_weather = ""
+    for node in nodes:
+        temp = node.get_text()
+        if (temp.find('[切换城市]')):
+            temp = temp[:temp.find('[切换城市]')]
+        tody_weather += temp
+    return tody_weather
+
+if __name__ == "__main__":
+    pin = xpinyin.Pinyin()
+    city_pinyin = pin.get_pinyin("杭州","")
+    tody_weather = get_weather(city_pinyin)
+    print(tody_weather)

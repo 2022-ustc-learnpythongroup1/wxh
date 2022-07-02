@@ -1,5 +1,6 @@
 #-*- coding: UTF-8 -*-
 
+from base64 import encode
 import sys
 import time
 import urllib
@@ -7,9 +8,10 @@ import  urllib.request
 import numpy as np
 from bs4 import BeautifulSoup
 from openpyxl import Workbook
+from openpyxl import worksheet
 from urllib.parse import quote
 
-
+import random
 
 
 #Some User Agents
@@ -26,13 +28,14 @@ def book_spider(book_tag):
     while(1):
         #url='http://www.douban.com/tag/%E5%B0%8F%E8%AF%B4/book?start=0' # For Test
         url='http://www.douban.com/tag/'+quote(book_tag)+'/book?start='+str(page_num*15)
-        time.sleep(2)
+        time.sleep(random.randint(1,8))
         
         print(url)
         #Last Version
         try:
             req = urllib.request.Request(url, headers=hds[page_num%len(hds)])
-            source_code = urllib.request.urlopen(req).read()
+            source_code = urllib.request.urlopen(req).read().decode("UTF-8")
+            # print(source_code)
             plain_text=str(source_code)   
         except (urllib.request.HTTPError, urllib.request.URLError) as e:
             print(e)
@@ -46,6 +49,9 @@ def book_spider(book_tag):
         #     fp.write(plain_text)
 
         soup = BeautifulSoup(plain_text, features="lxml")
+        # soup = BeautifulSoup(page,from_encoding="utf8")
+
+
         list_soup = soup.find('div', {'class': 'mod book-list'})
          
         # with open('test1.txt', 'w', encoding='utf-8')as fp:
@@ -59,7 +65,11 @@ def book_spider(book_tag):
         
         for book_info in list_soup.findAll('dd'):
             title = book_info.find('a', {'class':'title'}).string.strip()
-            desc = book_info.find('div', {'class':'desc'}).string.strip()
+            # print(book_info.find('div', {'class':'desc'}))
+            # print(type(book_info.find('div', {'class':'desc'})))
+            # print(book_info.find('div', {'class':'desc'}).decode())
+
+            desc = str(book_info.find('div', {'class':'desc'}).string.strip())
             desc_list = desc.split('/')
             book_url = book_info.find('a', {'class':'title'}).get('href')
             
@@ -115,16 +125,16 @@ def print_book_lists_excel(book_lists,book_tag_lists):
     wb=Workbook()
     ws=[]
     for i in range(len(book_tag_lists)):
-        ws.append(wb.create_sheet(title=book_tag_lists[i].decode())) #utf8->unicode
+        ws.append(wb.create_sheet(title=book_tag_lists[i])) #utf8->unicode
     for i in range(len(book_tag_lists)): 
         ws[i].append(['序号','书名','评分','评价人数','作者','出版社'])
         count=1
         for bl in book_lists[i]:
             ws[i].append([count,bl[0],float(bl[1]),int(bl[2]),bl[3],bl[4]])
-            count+=1
+        count+=1
     save_path='book_list'
     for i in range(len(book_tag_lists)):
-        save_path+=('-'+book_tag_lists[i].decode())
+        save_path+=('-'+book_tag_lists[i])
     save_path+='.xlsx'
     wb.save(save_path)
 
